@@ -1,6 +1,7 @@
 package com.me.anisjamadar.store.service;
 
 import com.me.anisjamadar.store.entities.Address;
+import com.me.anisjamadar.store.entities.Category;
 import com.me.anisjamadar.store.entities.Product;
 import com.me.anisjamadar.store.entities.User;
 import com.me.anisjamadar.store.repositories.*;
@@ -66,7 +67,7 @@ public class UserService {
 
     @Transactional
     public void manageProducts() {
-        var category = categoryRepository.findById((byte) 1).orElseThrow();
+        var category = new Category("cat 1");
         var product = Product.builder()
                 .name("product 2")
                 .description("desc 2")
@@ -76,5 +77,10 @@ public class UserService {
 
         productRepository.save(product);
 
+    }
+
+    @Transactional
+    public void updateProductPrices() {
+        productRepository.updatePriceByCategory(BigDecimal.valueOf(20), (byte) 1);
     }
 }
