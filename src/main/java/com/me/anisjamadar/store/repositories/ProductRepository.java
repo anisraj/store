@@ -1,5 +1,8 @@
 package com.me.anisjamadar.store.repositories;
 
+import com.me.anisjamadar.store.dtos.ProductSummary;
+import com.me.anisjamadar.store.dtos.ProductSummaryDTO;
+import com.me.anisjamadar.store.entities.Category;
 import com.me.anisjamadar.store.entities.Product;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -12,6 +15,9 @@ import java.util.List;
 public interface ProductRepository extends CrudRepository<Product, Long> {
     //derived query
     List<Product> findByPriceBetweenOrderByName(BigDecimal min, BigDecimal max);
+
+    @Query("select new com.me.anisjamadar.store.dtos.ProductSummaryDTO(p.id, p.name) from Product p where p.category = :category")
+    List<ProductSummaryDTO> findByCategory(@Param("category") Category category);
 
     //custom queries
     @Query("select p from Product p join p.category where p.price between :min and :max order by p.name")
