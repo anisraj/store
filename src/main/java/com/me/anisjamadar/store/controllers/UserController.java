@@ -1,6 +1,7 @@
 package com.me.anisjamadar.store.controllers;
 
 import com.me.anisjamadar.store.dtos.RegisterUserRequest;
+import com.me.anisjamadar.store.dtos.UpdateUserRequest;
 import com.me.anisjamadar.store.dtos.UserDto;
 import com.me.anisjamadar.store.entities.User;
 import com.me.anisjamadar.store.mappers.UserMapper;
@@ -53,5 +54,19 @@ public class UserController {
         var userDto = userMapper.toDto(result);
         var uri = uriBuilder.path("users/{id}").buildAndExpand(userDto.getId()).toUri();
         return ResponseEntity.created(uri).body(userDto);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<UserDto> updateUser(
+        @PathVariable(name = "id") Long id,
+        @RequestBody UpdateUserRequest request
+    ) {
+        var user = userRepository.findById(id).orElse(null);
+        if (user == null) {
+            return ResponseEntity.notFound().build();
+        }
+        userMapper.update(request, user);
+        var result = userRepository.save(user);
+        return ResponseEntity.ok(userMapper.toDto(result));
     }
 }
