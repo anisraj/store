@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @RestController
@@ -47,10 +48,16 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<UserDto> createUser(
+    public ResponseEntity<?> createUser(
         @Valid @RequestBody RegisterUserRequest request,
         UriComponentsBuilder uriBuilder
     ) {
+        if (userRepository.existsByEmail(request.getEmail())) {
+            return ResponseEntity.badRequest().body(
+                    Map.of("email", "Email is already registered.")
+            );
+        }
+
         var user = userMapper.toEntity(request);
         var result = userRepository.save(user);
         var userDto = userMapper.toDto(result);
@@ -84,8 +91,8 @@ public class UserController {
 
     @PostMapping("/{id}/change-password")
     public ResponseEntity<Void> changePassword(
-        @PathVariable(name = "id") Long id,
-        @RequestBody ChangePasswordRequest request
+            @PathVariable(name = "id") Long id,
+            @RequestBody ChangePasswordRequest request
     ) {
         var user = userRepository.findById(id).orElse(null);
         if (user == null) {
