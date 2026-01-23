@@ -1,11 +1,14 @@
 package com.me.anisjamadar.store.controllers;
 
+import com.me.anisjamadar.store.config.JwtConfig;
 import com.me.anisjamadar.store.dtos.JwtResponse;
 import com.me.anisjamadar.store.dtos.LoginRequest;
 import com.me.anisjamadar.store.dtos.UserDto;
 import com.me.anisjamadar.store.mappers.UserMapper;
 import com.me.anisjamadar.store.repositories.UserRepository;
 import com.me.anisjamadar.store.services.JwtService;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,11 +25,15 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
+    private final JwtConfig jwtConfig;
     private final UserRepository userRepository;
     private final UserMapper userMapper;
 
     @PostMapping("/login")
-    public ResponseEntity<JwtResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<JwtResponse> login(
+        @Valid @RequestBody LoginRequest loginRequest,
+        HttpServletResponse response
+    ) {
         authenticationManager.authenticate(
             new UsernamePasswordAuthenticationToken(
                 loginRequest.email,
@@ -36,9 +43,18 @@ public class AuthController {
 
         var user = userRepository.findByEmail(loginRequest.getEmail()).orElseThrow();
 
-        var token = jwtService.generateToken(user);
+        var accessToken = jwtService.generateAccessToken(user);
 
-        return ResponseEntity.ok(new JwtResponse(token));
+        var refreshToken = jwtService.generateRefreshToken(user);
+        var cookie = new Cookie("refreshToken", refreshToken);
+        cookie.setHttpOnly(true);
+        cookie.setPath("/auth/refresh");
+        cookie.setMaxAge(jwtConfig.getRefreshTokenExpiration());
+        cookie.setSecure(true);
+
+        response.addCookie(cookie);
+
+        return ResponseEntity.ok(new JwtResponse(accessToken));
     }
 
     @PostMapping("/validate")
